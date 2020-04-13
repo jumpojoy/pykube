@@ -161,18 +161,21 @@ class APIObject:
         self.obj = obj_merge(self.obj, self._original_obj, is_strategic)
         self.patch(self.obj, subresource=subresource)
 
-    def delete(self, propagation_policy: str = None):
+    def delete(self, propagation_policy: str = None, extra_body=None, extra_params=None):
         """
         Delete the Kubernetes resource by calling the API.
 
         The parameter propagation_policy defines whether to cascade the delete. It can be "Foreground", "Background" or "Orphan".
         See https://kubernetes.io/docs/concepts/workloads/controllers/garbage-collection/#setting-the-cascading-deletion-policy
+        The extra_body parameter defines extra body fields to pass in request.
+        The extra_params parameter defines extra parameters to pass in request.
         """
+        body = {}
         if propagation_policy:
-            options = {"propagationPolicy": propagation_policy}
-        else:
-            options = {}
-        r = self.api.delete(**self.api_kwargs(data=json.dumps(options)))
+            body = {"propagationPolicy": propagation_policy}
+        if extra_body:
+            body.update(extra_body)
+        r = self.api.delete(**self.api_kwargs(data=json.dumps(body), params=extra_params))
         if r.status_code != 404:
             self.api.raise_for_status(r)
 
